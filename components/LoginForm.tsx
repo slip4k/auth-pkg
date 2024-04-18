@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const FormSchema = z.object({
   username: z.string().min(2, {
@@ -29,22 +31,30 @@ const FormSchema = z.object({
 });
 
 export function LoginForm() {
+  const [formError, setFormError] = useState('');
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       username: '',
+      password: '',
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    toast({
-      title: 'You submitted the following values:',
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    const { username, password } = data;
+
+    const signInData = await signIn('credentials', {
+      username: username,
+      password: password,
+      redirect: false,
     });
+    if (signInData?.error) {
+      setFormError(signInData.error);
+    } else {
+      router.push('/dashboard');
+    }
   }
 
   return (
@@ -81,6 +91,11 @@ export function LoginForm() {
               </FormItem>
             )}
           />
+          {formError && (
+            <div className="text-center font-medium text-destructive">
+              {formError}
+            </div>
+          )}
           <Button className="w-full" type="submit">
             Sign In
           </Button>

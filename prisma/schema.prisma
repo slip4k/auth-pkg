@@ -16,8 +16,8 @@ datasource db {
 
 model User {
   id            Int             @id @default(autoincrement())
-  username      String          @unique
-  password      String          @db.VarChar(255)
+  username      String?          @unique
+  password      String?          @db.VarChar(255)
   email         String          @unique @db.VarChar(255)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
@@ -30,7 +30,6 @@ model Account {
   provider          String
   providerAccountId String
   accessToken       String?
-  refreshToken      String?
   accessTokenExpires DateTime?
 
   userId Int

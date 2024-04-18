@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
 
         const passwordMatch = await compare(
           credentials.password,
-          existingUser.password
+          existingUser.password!
         );
 
         if (!passwordMatch) {
@@ -65,27 +65,64 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    // async signIn({ account, profile }) {
-    //   if (account?.provider === 'google') {
-    //     if (!profile?.email) {
-    //       throw new Error('No Profile');
-    //     }
-    //     console.log(profile.name);
-    //     await db.user.upsert({
-    //       where: {
-    //         email: profile.email,
-    //       },
-    //       create: {
-    //         email: profile.email,
-    //         username: profile.name + '213',
-    //         password: profile.name + '213',
-    //       },
-    //       update: {
-    //       },
-    //     });
-    //   }
-    //   return true;
-    // },
+    async signIn({ account, profile }) {
+      if (account?.provider === 'google') {
+        if (!profile?.email) {
+          throw new Error('No Profile');
+        }
+        // console.log('profile', profile);
+        // console.log('account', account);
+
+        const user = await db.user.upsert({
+          where: {
+            email: profile.email,
+          },
+          create: {
+            email: profile.email,
+            accounts: {
+              create: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                accessToken: account.access_token,
+                accessTokenExpires: account.expires_at
+                  ? new Date(account.expires_at * 1000)
+                  : null,
+              },
+            },
+          },
+          update: {
+            accounts: {
+              upsert: {
+                where: {
+                  provider_providerAccountId: {
+                    provider: account.provider,
+                    providerAccountId: account.providerAccountId,
+                  },
+                },
+                update: {
+                  accessToken: account.access_token,
+                  accessTokenExpires: account.expires_at
+                    ? new Date(account.expires_at * 1000)
+                    : null,
+                },
+                create: {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  accessToken: account.access_token,
+                  accessTokenExpires: account.expires_at
+                    ? new Date(account.expires_at * 1000)
+                    : null,
+                },
+              },
+            },
+          },
+        });
+      }
+      return true;
+    },
+    async redirect({ url, baseUrl }) {
+      return baseUrl + '/dashboard';
+    },
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update') {
         return { ...token, ...session.user };

@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { signUp } from '@/lib/serverActions';
 
 const FormSchema = z
   .object({
@@ -48,7 +49,15 @@ export function SignupForm() {
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    // const newUser = await signUp()
+    const userCredentials = {
+      email: data.email,
+      username: data.username,
+      password: data.password,
+    };
+    const newUser = await signUp(userCredentials);
+    
     toast({
       title: 'You submitted the following values:',
       description: (
