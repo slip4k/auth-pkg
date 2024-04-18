@@ -5,6 +5,7 @@ import { db } from './db';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { Adapter } from 'next-auth/adapters';
 import { compare } from 'bcrypt';
+import { userAgent } from 'next/server';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as Adapter,
@@ -14,6 +15,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/',
+    signOut: '/dashboard',
   },
   providers: [
     CredentialsProvider({
@@ -121,14 +123,20 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      return baseUrl + '/dashboard';
+      const urlObj = new URL(url);
+      const authAction = urlObj.searchParams.get('authAction');
+      if (authAction === 'signOut') {
+        return baseUrl;
+      } else {
+        return baseUrl + '/dashboard';
+      }
     },
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update') {
         return { ...token, ...session.user };
       }
       if (user) {
-        return { ...token };
+        return { ...token, ...user };
       }
       return token;
     },
@@ -138,7 +146,6 @@ export const authOptions: NextAuthOptions = {
         user: {
           ...session.user,
           username: token.username,
-          avatar: token.avatar,
         },
       };
     },

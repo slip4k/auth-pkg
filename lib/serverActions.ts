@@ -42,3 +42,36 @@ export const signUp = async (userCredentials: UserCredentials) => {
     console.error(error);
   }
 };
+
+export const completeSignUp = async (userCredentials: UserCredentials) => {
+  const { email, username, password } = userCredentials;
+
+  try {
+    const existingUserByUserName = await db.user.findUnique({
+      where: { username: username },
+    });
+    if (existingUserByUserName) {
+      return { message: 'User with this username already exists.' };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const updateUser = await db.user.upsert({
+      where: {
+        email: email,
+      },
+      create: { username: username, email: email, password: hashedPassword },
+      update: { username: username, password: hashedPassword },
+    });
+
+    const userResponse = {
+      id: updateUser.id,
+      username: updateUser.username,
+      email: updateUser.email,
+    };
+
+    return userResponse;
+  } catch (error) {
+    console.error(error);
+  }
+};
