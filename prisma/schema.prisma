@@ -12,3 +12,31 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+
+model User {
+  id            Int             @id @default(autoincrement())
+  username      String          @unique
+  password      String          @db.VarChar(255)
+  email         String          @unique @db.VarChar(255)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  accounts      Account[]
+}
+
+model Account {
+  id                Int       @id @default(autoincrement())
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  accessTokenExpires DateTime?
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+}
+
+

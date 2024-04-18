@@ -52,55 +52,40 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Password is incorrect');
         }
 
-        if (!existingUser.emailVerified) {
-          throw new Error('Please verify your email');
-        }
-
         return {
           id: existingUser.id.toString(),
           username: existingUser.username,
           email: existingUser.email,
-          avatar: existingUser.avatar || '',
         };
       },
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      // profile(profile) {
-      //   return {
-      //     id: profile.sub,
-      //     firstName: profile.given_name,
-      //     lastName: profile.family_name,
-      //     email: profile.email,
-      //   }
-      // }
     }),
   ],
   callbacks: {
-    async signIn({ account, profile }) {
-      if (account?.provider === 'google') {
-        if (!profile?.email) {
-          throw new Error('No Profile');
-        }
-        console.log(profile.name);
-        await db.user.upsert({
-          where: {
-            email: profile.email,
-          },
-          create: {
-            email: profile.email,
-            firstName: profile.name,
-            username: profile.name + '213',
-            password: profile.name + '213',
-          },
-          update: {
-            firstName: profile.name,
-          },
-        });
-      }
-      return true;
-    },
+    // async signIn({ account, profile }) {
+    //   if (account?.provider === 'google') {
+    //     if (!profile?.email) {
+    //       throw new Error('No Profile');
+    //     }
+    //     console.log(profile.name);
+    //     await db.user.upsert({
+    //       where: {
+    //         email: profile.email,
+    //       },
+    //       create: {
+    //         email: profile.email,
+    //         username: profile.name + '213',
+    //         password: profile.name + '213',
+    //       },
+    //       update: {
+    //       },
+    //     });
+    //   }
+    //   return true;
+    // },
     async jwt({ token, user, trigger, session }) {
       if (trigger === 'update') {
         return { ...token, ...session.user };
